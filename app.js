@@ -13,12 +13,30 @@ function changeDatas(fileName, newData) {
     fs.writeFileSync(filePath, toAdd);
 }
 
-const chuckDb = readDatas("norrisDb")
+// funzione asincrona perchè abbiamo bisogno di attendere la risposta dal fetch per poter comparare correttamente il nuovo joke con quelli presenti nel DB
+async function getJoke(){
+    let flag = true;
 
-fetch("https://api.chucknorris.io/jokes/random")
-.then(res => res.json())
-.then(data => {
-    let joke = data.value
-    changeDatas("norrisDb", [...chuckDb, joke])
-    console.log(joke)
-}) 
+    while (flag) {
+        try {
+            // aspetto risposta dal fetch per poter continuare il ciclo correttamente
+            let res = await fetch("https://api.chucknorris.io/jokes/random");
+            let data = await res.json();
+            let joke = data.value;
+
+            if (!chuckDb.includes(joke)) {
+                changeDatas("norrisDb", [...chuckDb, joke]);
+                console.log("Nuova battuta: ", joke);
+                flag = false;
+            } else {
+                console.log("Già inserito")
+            }
+        } catch (error) {
+            console.error('Errore:', error);
+        }
+    }
+}
+
+const chuckDb = readDatas("norrisDb")
+console.log("Lista battute: ", chuckDb)
+getJoke()
